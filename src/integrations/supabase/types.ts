@@ -14,13 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      empresas: {
+        Row: {
+          cnpj: string | null
+          created_at: string
+          id: string
+          nome: string
+          plano: string
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          plano?: string
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          plano?: string
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          cargo: string | null
+          created_at: string
+          email: string
+          empresa_id: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          cargo?: string | null
+          created_at?: string
+          email: string
+          empresa_id: string
+          id: string
+          nome: string
+        }
+        Update: {
+          cargo?: string | null
+          created_at?: string
+          email?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_empresa_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
