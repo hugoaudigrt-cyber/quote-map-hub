@@ -38,6 +38,71 @@ export type Database = {
         }
         Relationships: []
       }
+      fornecedores: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cnpj: string
+          created_at: string
+          email_comercial: string | null
+          email_financeiro: string | null
+          empresa_id: string
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome_fantasia: string | null
+          observacoes: string | null
+          razao_social: string
+          telefone: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj: string
+          created_at?: string
+          email_comercial?: string | null
+          email_financeiro?: string | null
+          empresa_id: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social: string
+          telefone?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string
+          created_at?: string
+          email_comercial?: string | null
+          email_financeiro?: string | null
+          empresa_id?: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social?: string
+          telefone?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
           cargo: string | null
