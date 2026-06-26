@@ -191,6 +191,96 @@ export type Database = {
           },
         ]
       }
+      solicitacao_itens: {
+        Row: {
+          created_at: string
+          id: string
+          observacoes: string | null
+          produto_id: string
+          quantidade: number
+          solicitacao_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          produto_id: string
+          quantidade: number
+          solicitacao_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          produto_id?: string
+          quantidade?: number
+          solicitacao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacao_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacao_itens_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solicitacoes: {
+        Row: {
+          codigo: string
+          created_at: string
+          empresa_id: string
+          id: string
+          obra_id: string
+          observacoes: string | null
+          status: Database["public"]["Enums"]["solicitacao_status"]
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          obra_id: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["solicitacao_status"]
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          obra_id?: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["solicitacao_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
           cargo: string | null
@@ -235,6 +325,7 @@ export type Database = {
     }
     Enums: {
       obra_status: "ativa" | "pausada" | "finalizada"
+      solicitacao_status: "aberta" | "em_cotacao" | "finalizada" | "cancelada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -363,6 +454,7 @@ export const Constants = {
   public: {
     Enums: {
       obra_status: ["ativa", "pausada", "finalizada"],
+      solicitacao_status: ["aberta", "em_cotacao", "finalizada", "cancelada"],
     },
   },
 } as const
