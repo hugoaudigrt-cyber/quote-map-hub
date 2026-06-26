@@ -103,6 +103,50 @@ export type Database = {
           },
         ]
       }
+      produtos: {
+        Row: {
+          categoria: string | null
+          codigo: string
+          created_at: string
+          descricao: string
+          empresa_id: string
+          id: string
+          observacoes: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          codigo: string
+          created_at?: string
+          descricao: string
+          empresa_id: string
+          id?: string
+          observacoes?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          observacoes?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
           cargo: string | null
