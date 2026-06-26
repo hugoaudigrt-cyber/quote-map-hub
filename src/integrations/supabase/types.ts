@@ -103,6 +103,50 @@ export type Database = {
           },
         ]
       }
+      obras: {
+        Row: {
+          cliente: string | null
+          codigo: string
+          created_at: string
+          empresa_id: string
+          id: string
+          local: string | null
+          nome: string
+          status: Database["public"]["Enums"]["obra_status"]
+          updated_at: string
+        }
+        Insert: {
+          cliente?: string | null
+          codigo: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          local?: string | null
+          nome: string
+          status?: Database["public"]["Enums"]["obra_status"]
+          updated_at?: string
+        }
+        Update: {
+          cliente?: string | null
+          codigo?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          local?: string | null
+          nome?: string
+          status?: Database["public"]["Enums"]["obra_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtos: {
         Row: {
           categoria: string | null
@@ -190,7 +234,7 @@ export type Database = {
       current_empresa_id: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      obra_status: "ativa" | "pausada" | "finalizada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -317,6 +361,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      obra_status: ["ativa", "pausada", "finalizada"],
+    },
   },
 } as const
