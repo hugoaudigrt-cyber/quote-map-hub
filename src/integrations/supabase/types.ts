@@ -103,6 +103,135 @@ export type Database = {
           },
         ]
       }
+      mapa_itens: {
+        Row: {
+          created_at: string
+          id: string
+          mapa_id: string
+          produto_id: string
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mapa_id: string
+          produto_id: string
+          quantidade: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mapa_id?: string
+          produto_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mapa_itens_mapa_id_fkey"
+            columns: ["mapa_id"]
+            isOneToOne: false
+            referencedRelation: "mapas_cotacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapa_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mapa_precos: {
+        Row: {
+          created_at: string
+          fornecedor_id: string
+          id: string
+          mapa_item_id: string
+          preco: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fornecedor_id: string
+          id?: string
+          mapa_item_id: string
+          preco?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fornecedor_id?: string
+          id?: string
+          mapa_item_id?: string
+          preco?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mapa_precos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapa_precos_mapa_item_id_fkey"
+            columns: ["mapa_item_id"]
+            isOneToOne: false
+            referencedRelation: "mapa_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mapas_cotacao: {
+        Row: {
+          codigo: string
+          created_at: string
+          empresa_id: string
+          id: string
+          observacoes: string | null
+          solicitacao_id: string
+          status: Database["public"]["Enums"]["mapa_status"]
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          observacoes?: string | null
+          solicitacao_id: string
+          status?: Database["public"]["Enums"]["mapa_status"]
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          observacoes?: string | null
+          solicitacao_id?: string
+          status?: Database["public"]["Enums"]["mapa_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mapas_cotacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapas_cotacao_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           cliente: string | null
@@ -324,6 +453,7 @@ export type Database = {
       current_empresa_id: { Args: never; Returns: string }
     }
     Enums: {
+      mapa_status: "aberto" | "finalizado" | "cancelado"
       obra_status: "ativa" | "pausada" | "finalizada"
       solicitacao_status: "aberta" | "em_cotacao" | "finalizada" | "cancelada"
     }
@@ -453,6 +583,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      mapa_status: ["aberto", "finalizado", "cancelado"],
       obra_status: ["ativa", "pausada", "finalizada"],
       solicitacao_status: ["aberta", "em_cotacao", "finalizada", "cancelada"],
     },
