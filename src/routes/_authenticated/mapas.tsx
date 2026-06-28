@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useEnsureEmpresa } from "@/hooks/use-empresa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -220,6 +221,7 @@ function MapasPage() {
 }
 
 function NovoMapaDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const ensureEmpresa = useEnsureEmpresa();
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [solicitacaoId, setSolicitacaoId] = useState<string>("");
@@ -260,17 +262,12 @@ function NovoMapaDialog({ onClose, onCreated }: { onClose: () => void; onCreated
 
     setSaving(true);
     try {
-      const { data: userRow } = await supabase
-        .from("usuarios")
-        .select("empresa_id")
-        .eq("id", (await supabase.auth.getUser()).data.user!.id)
-        .single();
-      if (!userRow) throw new Error("Empresa não encontrada");
+      const empresaId = await ensureEmpresa();
 
       // create mapa
       const { data: mapa, error: e1 } = await supabase
         .from("mapas_cotacao")
-        .insert({ empresa_id: userRow.empresa_id, solicitacao_id: solicitacaoId, codigo: "" })
+        .insert({ empresa_id: empresaId, solicitacao_id: solicitacaoId, codigo: "" })
         .select("id")
         .single();
       if (e1) throw e1;

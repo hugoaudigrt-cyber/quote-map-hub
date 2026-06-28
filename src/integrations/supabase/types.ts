@@ -21,6 +21,7 @@ export type Database = {
           id: string
           nome: string
           plano: string
+          updated_at: string
         }
         Insert: {
           cnpj?: string | null
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           nome: string
           plano?: string
+          updated_at?: string
         }
         Update: {
           cnpj?: string | null
@@ -35,6 +37,7 @@ export type Database = {
           id?: string
           nome?: string
           plano?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -429,26 +432,32 @@ export type Database = {
         Row: {
           cargo: string | null
           created_at: string
+          deleted_at: string | null
           email: string
           empresa_id: string
           id: string
           nome: string
+          updated_at: string
         }
         Insert: {
           cargo?: string | null
           created_at?: string
+          deleted_at?: string | null
           email: string
           empresa_id: string
           id: string
           nome: string
+          updated_at?: string
         }
         Update: {
           cargo?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string
           empresa_id?: string
           id?: string
           nome?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -466,6 +475,11 @@ export type Database = {
     }
     Functions: {
       current_empresa_id: { Args: never; Returns: string }
+      ensure_usuario_empresa: { Args: never; Returns: string }
+      ensure_usuario_empresa_for_user: {
+        Args: { _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       mapa_status: "aberto" | "finalizado" | "cancelado"

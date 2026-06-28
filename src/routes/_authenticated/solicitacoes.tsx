@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ClipboardList, Plus, Pencil, Trash2, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { useEnsureEmpresa } from "@/hooks/use-empresa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,7 @@ const STATUS_VARIANT: Record<Status, "default" | "secondary" | "outline" | "dest
 type Row = Solicitacao & { obras: { codigo: string; nome: string } | null; itens_count: number };
 
 function SolicitacoesPage() {
+  const ensureEmpresa = useEnsureEmpresa();
   const [list, setList] = useState<Row[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -172,10 +174,9 @@ function SolicitacoesPage() {
         .eq("id", editing.id);
       if (error) { toast.error("Erro ao atualizar: " + error.message); setSaving(false); return; }
     } else {
-      const { data: ue } = await supabase.from("usuarios").select("empresa_id").maybeSingle();
-      if (!ue) { toast.error("Empresa não encontrada"); setSaving(false); return; }
+      const empresaId = await ensureEmpresa();
       const insert: TablesInsert<"solicitacoes"> = {
-        empresa_id: ue.empresa_id,
+        empresa_id: empresaId,
         obra_id: form.obra_id,
         status: form.status,
         observacoes: form.observacoes || null,
