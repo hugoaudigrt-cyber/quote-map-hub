@@ -170,7 +170,7 @@ function FornecedoresPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("fornecedores").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("fornecedores").update({ deleted_at: new Date().toISOString() }).eq("id", deleteTarget.id);
     if (error) toast.error("Erro ao excluir");
     else { toast.success("Fornecedor excluído"); load(); }
     setDeleteTarget(null);
