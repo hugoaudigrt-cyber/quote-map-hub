@@ -139,7 +139,7 @@ function ProdutosPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("produtos").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("produtos").update({ deleted_at: new Date().toISOString() }).eq("id", deleteTarget.id);
     if (error) toast.error("Erro ao excluir");
     else { toast.success("Produto excluído"); load(); }
     setDeleteTarget(null);
