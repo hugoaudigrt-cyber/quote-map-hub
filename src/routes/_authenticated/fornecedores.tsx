@@ -125,9 +125,10 @@ function FornecedoresPage() {
       .from("fornecedores")
       .select("*")
       .eq("cnpj", cnpjDigits)
+      .is("deleted_at", null)
       .maybeSingle();
     const { data: dup } = editing
-      ? await supabase.from("fornecedores").select("*").eq("cnpj", cnpjDigits).neq("id", editing.id).maybeSingle()
+      ? await supabase.from("fornecedores").select("*").eq("cnpj", cnpjDigits).is("deleted_at", null).neq("id", editing.id).maybeSingle()
       : await dupQuery;
 
     if (dup) {
