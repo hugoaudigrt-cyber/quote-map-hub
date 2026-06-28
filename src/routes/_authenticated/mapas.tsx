@@ -201,7 +201,7 @@ function MapasPage() {
             <AlertDialogAction
               onClick={async () => {
                 if (!deleteId) return;
-                const { error } = await supabase.from("mapas_cotacao").delete().eq("id", deleteId);
+                const { error } = await supabase.from("mapas_cotacao").update({ deleted_at: new Date().toISOString() }).eq("id", deleteId);
                 if (error) toast.error(error.message);
                 else {
                   toast.success("Mapa excluído");
