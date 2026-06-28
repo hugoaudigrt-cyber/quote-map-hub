@@ -476,6 +476,10 @@ export type Database = {
     Functions: {
       current_empresa_id: { Args: never; Returns: string }
       ensure_usuario_empresa: { Args: never; Returns: string }
+      ensure_usuario_empresa_for_user: {
+        Args: { _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       mapa_status: "aberto" | "finalizado" | "cancelado"
