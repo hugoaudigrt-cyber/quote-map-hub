@@ -232,8 +232,9 @@ function NovoMapaDialog({ onClose, onCreated }: { onClose: () => void; onCreated
         supabase
           .from("solicitacoes")
           .select("id, codigo, obra:obras(nome)")
+          .is("deleted_at", null)
           .order("created_at", { ascending: false }),
-        supabase.from("fornecedores").select("id, razao_social, nome_fantasia").order("razao_social"),
+        supabase.from("fornecedores").select("id, razao_social, nome_fantasia").is("deleted_at", null).order("razao_social"),
       ]);
       if (s.error) toast.error(s.error.message);
       else setSolicitacoes((s.data as unknown as Solicitacao[]) ?? []);
