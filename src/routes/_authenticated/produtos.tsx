@@ -51,6 +51,7 @@ function ProdutosPage() {
     const { data, error } = await supabase
       .from("produtos")
       .select("*")
+      .is("deleted_at", null)
       .order("descricao");
     if (error) toast.error("Erro ao carregar produtos");
     else setList(data ?? []);
