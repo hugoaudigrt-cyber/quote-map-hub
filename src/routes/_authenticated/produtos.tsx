@@ -101,9 +101,10 @@ function ProdutosPage() {
       .from("produtos")
       .select("*")
       .eq("codigo", codigoTrim)
+      .is("deleted_at", null)
       .maybeSingle();
     const { data: dup } = editing
-      ? await supabase.from("produtos").select("*").eq("codigo", codigoTrim).neq("id", editing.id).maybeSingle()
+      ? await supabase.from("produtos").select("*").eq("codigo", codigoTrim).is("deleted_at", null).neq("id", editing.id).maybeSingle()
       : await dupQuery;
 
     if (dup) {
