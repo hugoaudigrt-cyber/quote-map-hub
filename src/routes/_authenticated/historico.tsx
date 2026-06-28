@@ -53,6 +53,7 @@ function HistoricoPage() {
       .from("mapas_cotacao")
       .select("id, codigo, created_at, solicitacao:solicitacoes(obra:obras(nome))")
       .eq("status", "finalizado")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) {
       toast.error(error.message);

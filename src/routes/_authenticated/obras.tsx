@@ -66,6 +66,7 @@ function ObrasPage() {
     const { data, error } = await supabase
       .from("obras")
       .select("*")
+      .is("deleted_at", null)
       .order("codigo", { ascending: false });
     if (error) toast.error("Erro ao carregar obras");
     else setList((data ?? []) as Obra[]);
@@ -132,7 +133,7 @@ function ObrasPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("obras").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("obras").update({ deleted_at: new Date().toISOString() }).eq("id", deleteTarget.id);
     if (error) toast.error("Erro ao excluir");
     else { toast.success("Obra excluída"); load(); }
     setDeleteTarget(null);

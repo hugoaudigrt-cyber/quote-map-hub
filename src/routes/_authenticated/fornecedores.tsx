@@ -68,6 +68,7 @@ function FornecedoresPage() {
     const { data, error } = await supabase
       .from("fornecedores")
       .select("*")
+      .is("deleted_at", null)
       .order("razao_social");
     if (error) toast.error("Erro ao carregar fornecedores");
     else setList(data ?? []);
@@ -124,9 +125,10 @@ function FornecedoresPage() {
       .from("fornecedores")
       .select("*")
       .eq("cnpj", cnpjDigits)
+      .is("deleted_at", null)
       .maybeSingle();
     const { data: dup } = editing
-      ? await supabase.from("fornecedores").select("*").eq("cnpj", cnpjDigits).neq("id", editing.id).maybeSingle()
+      ? await supabase.from("fornecedores").select("*").eq("cnpj", cnpjDigits).is("deleted_at", null).neq("id", editing.id).maybeSingle()
       : await dupQuery;
 
     if (dup) {
@@ -168,7 +170,7 @@ function FornecedoresPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("fornecedores").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("fornecedores").update({ deleted_at: new Date().toISOString() }).eq("id", deleteTarget.id);
     if (error) toast.error("Erro ao excluir");
     else { toast.success("Fornecedor excluído"); load(); }
     setDeleteTarget(null);

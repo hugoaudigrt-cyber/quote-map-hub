@@ -51,6 +51,7 @@ function ProdutosPage() {
     const { data, error } = await supabase
       .from("produtos")
       .select("*")
+      .is("deleted_at", null)
       .order("descricao");
     if (error) toast.error("Erro ao carregar produtos");
     else setList(data ?? []);
@@ -100,9 +101,10 @@ function ProdutosPage() {
       .from("produtos")
       .select("*")
       .eq("codigo", codigoTrim)
+      .is("deleted_at", null)
       .maybeSingle();
     const { data: dup } = editing
-      ? await supabase.from("produtos").select("*").eq("codigo", codigoTrim).neq("id", editing.id).maybeSingle()
+      ? await supabase.from("produtos").select("*").eq("codigo", codigoTrim).is("deleted_at", null).neq("id", editing.id).maybeSingle()
       : await dupQuery;
 
     if (dup) {
@@ -137,7 +139,7 @@ function ProdutosPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("produtos").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("produtos").update({ deleted_at: new Date().toISOString() }).eq("id", deleteTarget.id);
     if (error) toast.error("Erro ao excluir");
     else { toast.success("Produto excluído"); load(); }
     setDeleteTarget(null);
