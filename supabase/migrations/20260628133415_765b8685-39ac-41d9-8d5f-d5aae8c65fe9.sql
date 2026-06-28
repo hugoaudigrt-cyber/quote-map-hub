@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.current_empresa_id() TO authenticated;
