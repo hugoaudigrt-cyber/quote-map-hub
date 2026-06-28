@@ -66,6 +66,7 @@ function ObrasPage() {
     const { data, error } = await supabase
       .from("obras")
       .select("*")
+      .is("deleted_at", null)
       .order("codigo", { ascending: false });
     if (error) toast.error("Erro ao carregar obras");
     else setList((data ?? []) as Obra[]);
