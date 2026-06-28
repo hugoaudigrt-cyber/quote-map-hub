@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Truck, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { useEnsureEmpresa } from "@/hooks/use-empresa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +54,7 @@ const empty = {
 };
 
 function FornecedoresPage() {
+  const ensureEmpresa = useEnsureEmpresa();
   const [list, setList] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -157,9 +159,8 @@ function FornecedoresPage() {
       if (error) toast.error("Erro ao atualizar: " + error.message);
       else { toast.success("Fornecedor atualizado"); setOpen(false); load(); }
     } else {
-      const { data: ue } = await supabase.from("usuarios").select("empresa_id").maybeSingle();
-      if (!ue) { toast.error("Empresa não encontrada"); setSaving(false); return; }
-      const { error } = await supabase.from("fornecedores").insert({ ...payload, empresa_id: ue.empresa_id });
+      const empresaId = await ensureEmpresa();
+      const { error } = await supabase.from("fornecedores").insert({ ...payload, empresa_id: empresaId });
       if (error) {
         if (error.code === "23505") toast.error("CNPJ já cadastrado nesta empresa");
         else toast.error("Erro ao criar: " + error.message);

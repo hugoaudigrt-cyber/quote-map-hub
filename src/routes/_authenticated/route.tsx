@@ -1,9 +1,11 @@
 import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { useEnsureEmpresa } from "@/hooks/use-empresa";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -17,10 +19,44 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const navigate = useNavigate();
+  const ensureEmpresa = useEnsureEmpresa();
+  const [status, setStatus] = useState<"checking" | "ready" | "error">("checking");
+
+  useEffect(() => {
+    let active = true;
+    ensureEmpresa()
+      .then(() => {
+        if (active) setStatus("ready");
+      })
+      .catch(() => {
+        if (active) setStatus("error");
+      });
+    return () => {
+      active = false;
+    };
+  }, [ensureEmpresa]);
+
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate({ to: "/auth" });
   }
+
+  if (status !== "ready") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        <div className="w-full max-w-sm rounded-lg border bg-background p-6 text-center shadow-sm">
+          <p className="font-medium">{status === "checking" ? "Validando empresa..." : "Não foi possível validar a empresa"}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {status === "checking" ? "Preparando seu ambiente de trabalho." : "Tente sair e entrar novamente."}
+          </p>
+          {status === "error" && (
+            <Button className="mt-4" onClick={() => setStatus("checking")}>Tentar novamente</Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-muted/30">

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { useEnsureEmpresa } from "@/hooks/use-empresa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,7 @@ const STATUS_VARIANT: Record<Status, "default" | "secondary" | "outline"> = {
 };
 
 function ObrasPage() {
+  const ensureEmpresa = useEnsureEmpresa();
   const [list, setList] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -121,9 +123,8 @@ function ObrasPage() {
       if (error) toast.error("Erro ao atualizar: " + error.message);
       else { toast.success("Obra atualizada"); setOpen(false); load(); }
     } else {
-      const { data: ue } = await supabase.from("usuarios").select("empresa_id").maybeSingle();
-      if (!ue) { toast.error("Empresa não encontrada"); setSaving(false); return; }
-      const insert: TablesInsert<"obras"> = { ...payload, empresa_id: ue.empresa_id, codigo: "" };
+      const empresaId = await ensureEmpresa();
+      const insert: TablesInsert<"obras"> = { ...payload, empresa_id: empresaId, codigo: "" };
       const { error } = await supabase.from("obras").insert(insert);
       if (error) toast.error("Erro ao criar: " + error.message);
       else { toast.success("Obra criada"); setOpen(false); load(); }
