@@ -78,9 +78,10 @@ function SolicitacoesPage() {
       supabase
         .from("solicitacoes")
         .select("*, obras(codigo, nome), solicitacao_itens(id)")
+        .is("deleted_at", null)
         .order("codigo", { ascending: false }),
-      supabase.from("obras").select("*").order("codigo", { ascending: false }),
-      supabase.from("produtos").select("*").order("descricao"),
+      supabase.from("obras").select("*").is("deleted_at", null).order("codigo", { ascending: false }),
+      supabase.from("produtos").select("*").is("deleted_at", null).order("descricao"),
     ]);
     if (error) toast.error("Erro ao carregar solicitações");
     else {
