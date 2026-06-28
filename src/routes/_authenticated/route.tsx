@@ -21,6 +21,7 @@ function AuthenticatedLayout() {
   const navigate = useNavigate();
   const ensureEmpresa = useEnsureEmpresa();
   const [status, setStatus] = useState<"checking" | "ready" | "error">("checking");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -34,7 +35,7 @@ function AuthenticatedLayout() {
     return () => {
       active = false;
     };
-  }, [ensureEmpresa]);
+  }, [ensureEmpresa, attempt]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -50,7 +51,7 @@ function AuthenticatedLayout() {
             {status === "checking" ? "Preparando seu ambiente de trabalho." : "Tente sair e entrar novamente."}
           </p>
           {status === "error" && (
-            <Button className="mt-4" onClick={() => setStatus("checking")}>Tentar novamente</Button>
+            <Button className="mt-4" onClick={() => { setStatus("checking"); setAttempt((value) => value + 1); }}>Tentar novamente</Button>
           )}
         </div>
       </div>
