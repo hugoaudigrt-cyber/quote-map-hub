@@ -223,7 +223,7 @@ function SolicitacoesPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    const { error } = await supabase.from("solicitacoes").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("solicitacoes").update({ deleted_at: new Date().toISOString() }).eq("id", deleteTarget.id);
     if (error) toast.error("Erro ao excluir");
     else { toast.success("Solicitação excluída"); load(); }
     setDeleteTarget(null);
