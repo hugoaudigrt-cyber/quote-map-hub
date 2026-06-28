@@ -68,6 +68,7 @@ function FornecedoresPage() {
     const { data, error } = await supabase
       .from("fornecedores")
       .select("*")
+      .is("deleted_at", null)
       .order("razao_social");
     if (error) toast.error("Erro ao carregar fornecedores");
     else setList(data ?? []);
