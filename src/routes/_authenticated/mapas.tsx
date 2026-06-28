@@ -81,6 +81,7 @@ function MapasPage() {
     const { data, error } = await supabase
       .from("mapas_cotacao")
       .select("id, codigo, status, created_at, solicitacao:solicitacoes(codigo, obra:obras(nome))")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     else setMapas((data as unknown as MapaRow[]) ?? []);
