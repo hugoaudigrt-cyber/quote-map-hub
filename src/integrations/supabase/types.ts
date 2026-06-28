@@ -44,6 +44,7 @@ export type Database = {
           cidade: string | null
           cnpj: string
           created_at: string
+          deleted_at: string | null
           email_comercial: string | null
           email_financeiro: string | null
           empresa_id: string
@@ -62,6 +63,7 @@ export type Database = {
           cidade?: string | null
           cnpj: string
           created_at?: string
+          deleted_at?: string | null
           email_comercial?: string | null
           email_financeiro?: string | null
           empresa_id: string
@@ -80,6 +82,7 @@ export type Database = {
           cidade?: string | null
           cnpj?: string
           created_at?: string
+          deleted_at?: string | null
           email_comercial?: string | null
           email_financeiro?: string | null
           empresa_id?: string
@@ -188,6 +191,7 @@ export type Database = {
         Row: {
           codigo: string
           created_at: string
+          deleted_at: string | null
           empresa_id: string
           id: string
           observacoes: string | null
@@ -198,6 +202,7 @@ export type Database = {
         Insert: {
           codigo: string
           created_at?: string
+          deleted_at?: string | null
           empresa_id: string
           id?: string
           observacoes?: string | null
@@ -208,6 +213,7 @@ export type Database = {
         Update: {
           codigo?: string
           created_at?: string
+          deleted_at?: string | null
           empresa_id?: string
           id?: string
           observacoes?: string | null
@@ -237,6 +243,7 @@ export type Database = {
           cliente: string | null
           codigo: string
           created_at: string
+          deleted_at: string | null
           empresa_id: string
           id: string
           local: string | null
@@ -248,6 +255,7 @@ export type Database = {
           cliente?: string | null
           codigo: string
           created_at?: string
+          deleted_at?: string | null
           empresa_id: string
           id?: string
           local?: string | null
@@ -259,6 +267,7 @@ export type Database = {
           cliente?: string | null
           codigo?: string
           created_at?: string
+          deleted_at?: string | null
           empresa_id?: string
           id?: string
           local?: string | null
@@ -281,6 +290,7 @@ export type Database = {
           categoria: string | null
           codigo: string
           created_at: string
+          deleted_at: string | null
           descricao: string
           empresa_id: string
           id: string
@@ -292,6 +302,7 @@ export type Database = {
           categoria?: string | null
           codigo: string
           created_at?: string
+          deleted_at?: string | null
           descricao: string
           empresa_id: string
           id?: string
@@ -303,6 +314,7 @@ export type Database = {
           categoria?: string | null
           codigo?: string
           created_at?: string
+          deleted_at?: string | null
           descricao?: string
           empresa_id?: string
           id?: string
@@ -366,6 +378,7 @@ export type Database = {
         Row: {
           codigo: string
           created_at: string
+          deleted_at: string | null
           empresa_id: string
           id: string
           obra_id: string
@@ -376,6 +389,7 @@ export type Database = {
         Insert: {
           codigo: string
           created_at?: string
+          deleted_at?: string | null
           empresa_id: string
           id?: string
           obra_id: string
@@ -386,6 +400,7 @@ export type Database = {
         Update: {
           codigo?: string
           created_at?: string
+          deleted_at?: string | null
           empresa_id?: string
           id?: string
           obra_id?: string
