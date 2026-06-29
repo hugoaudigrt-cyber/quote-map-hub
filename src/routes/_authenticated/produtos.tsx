@@ -33,8 +33,10 @@ const empty = {
   descricao: "",
   unidade: "",
   categoria: "",
+  fabricante: "",
   observacoes: "",
 };
+
 
 function ProdutosPage() {
   const ensureEmpresa = useEnsureEmpresa();
