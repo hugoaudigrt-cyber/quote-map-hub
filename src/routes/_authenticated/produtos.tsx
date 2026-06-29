@@ -124,8 +124,10 @@ function ProdutosPage() {
       descricao: form.descricao.trim(),
       unidade: form.unidade || null,
       categoria: form.categoria || null,
+      fabricante: form.fabricante || null,
       observacoes: form.observacoes || null,
     };
+
 
     if (editing) {
       const { error } = await supabase.from("produtos").update(payload).eq("id", editing.id);
