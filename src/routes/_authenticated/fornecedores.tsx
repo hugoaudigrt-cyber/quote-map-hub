@@ -263,70 +263,88 @@ function FornecedoresPage() {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar fornecedor" : "Novo fornecedor"}</DialogTitle>
-            <DialogDescription>Preencha os dados do fornecedor.</DialogDescription>
+            <DialogDescription>
+              {editing
+                ? "Atualize os dados e gerencie os produtos fornecidos."
+                : "Preencha os dados do fornecedor. Após salvar, você poderá adicionar produtos fornecidos."}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2 space-y-2">
-                <Label>Razão social *</Label>
-                <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} required />
-              </div>
-              <div className="space-y-2">
-                <Label>Nome fantasia</Label>
-                <Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>CNPJ *</Label>
-                <Input value={formatCnpj(form.cnpj)} onChange={(e) => setForm({ ...form, cnpj: onlyDigits(e.target.value) })} maxLength={18} required />
-              </div>
-              <div className="sm:col-span-2 space-y-2">
-                <Label>Endereço</Label>
-                <Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Cidade</Label>
-                <Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label>Estado</Label>
-                  <Input value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase().slice(0, 2) })} maxLength={2} />
+          <Tabs defaultValue="dados" className="w-full">
+            <TabsList className={editing ? "grid w-full grid-cols-2" : "hidden"}>
+              <TabsTrigger value="dados">Dados</TabsTrigger>
+              <TabsTrigger value="produtos">Produtos Fornecidos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="dados" className="mt-4">
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label>Razão social *</Label>
+                    <Input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nome fantasia</Label>
+                    <Input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CNPJ *</Label>
+                    <Input value={formatCnpj(form.cnpj)} onChange={(e) => setForm({ ...form, cnpj: onlyDigits(e.target.value) })} maxLength={18} required />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label>Endereço</Label>
+                    <Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
+                      <Label>Estado</Label>
+                      <Input value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase().slice(0, 2) })} maxLength={2} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>CEP</Label>
+                      <Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Telefone</Label>
+                    <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>WhatsApp</Label>
+                    <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>E-mail comercial</Label>
+                    <Input type="email" value={form.email_comercial} onChange={(e) => setForm({ ...form, email_comercial: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>E-mail financeiro</Label>
+                    <Input type="email" value={form.email_financeiro} onChange={(e) => setForm({ ...form, email_financeiro: e.target.value })} />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label>Observações</Label>
+                    <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone</Label>
-                <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>WhatsApp</Label>
-                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>E-mail comercial</Label>
-                <Input type="email" value={form.email_comercial} onChange={(e) => setForm({ ...form, email_comercial: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>E-mail financeiro</Label>
-                <Input type="email" value={form.email_financeiro} onChange={(e) => setForm({ ...form, email_financeiro: e.target.value })} />
-              </div>
-              <div className="sm:col-span-2 space-y-2">
-                <Label>Observações</Label>
-                <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
-            </DialogFooter>
-          </form>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+                </DialogFooter>
+              </form>
+            </TabsContent>
+            {editing && (
+              <TabsContent value="produtos" className="mt-4">
+                <FornecedorProdutosTab fornecedorId={editing.id} />
+              </TabsContent>
+            )}
+          </Tabs>
         </DialogContent>
+
       </Dialog>
 
       <AlertDialog open={!!duplicate} onOpenChange={(o) => !o && setDuplicate(null)}>
