@@ -87,10 +87,12 @@ function ProdutosPage() {
       descricao: p.descricao ?? "",
       unidade: p.unidade ?? "",
       categoria: p.categoria ?? "",
+      fabricante: p.fabricante ?? "",
       observacoes: p.observacoes ?? "",
     });
     setOpen(true);
   }
+
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
