@@ -253,10 +253,15 @@ function ProdutosPage() {
                 <Label>Descrição *</Label>
                 <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} required />
               </div>
-              <div className="sm:col-span-2 space-y-2">
+              <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="Ex: Material de construção, Elétrica, Hidráulica" />
+                <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="Ex: Material de construção, Elétrica" />
               </div>
+              <div className="space-y-2">
+                <Label>Fabricante</Label>
+                <Input value={form.fabricante} onChange={(e) => setForm({ ...form, fabricante: e.target.value })} placeholder="Opcional" />
+              </div>
+
               <div className="sm:col-span-2 space-y-2">
                 <Label>Observações</Label>
                 <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
