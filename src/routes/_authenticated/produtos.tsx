@@ -33,8 +33,10 @@ const empty = {
   descricao: "",
   unidade: "",
   categoria: "",
+  fabricante: "",
   observacoes: "",
 };
+
 
 function ProdutosPage() {
   const ensureEmpresa = useEnsureEmpresa();
@@ -85,10 +87,12 @@ function ProdutosPage() {
       descricao: p.descricao ?? "",
       unidade: p.unidade ?? "",
       categoria: p.categoria ?? "",
+      fabricante: p.fabricante ?? "",
       observacoes: p.observacoes ?? "",
     });
     setOpen(true);
   }
+
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -120,8 +124,10 @@ function ProdutosPage() {
       descricao: form.descricao.trim(),
       unidade: form.unidade || null,
       categoria: form.categoria || null,
+      fabricante: form.fabricante || null,
       observacoes: form.observacoes || null,
     };
+
 
     if (editing) {
       const { error } = await supabase.from("produtos").update(payload).eq("id", editing.id);
@@ -247,10 +253,15 @@ function ProdutosPage() {
                 <Label>Descrição *</Label>
                 <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} required />
               </div>
-              <div className="sm:col-span-2 space-y-2">
+              <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="Ex: Material de construção, Elétrica, Hidráulica" />
+                <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="Ex: Material de construção, Elétrica" />
               </div>
+              <div className="space-y-2">
+                <Label>Fabricante</Label>
+                <Input value={form.fabricante} onChange={(e) => setForm({ ...form, fabricante: e.target.value })} placeholder="Opcional" />
+              </div>
+
               <div className="sm:col-span-2 space-y-2">
                 <Label>Observações</Label>
                 <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />

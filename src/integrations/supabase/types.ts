@@ -41,6 +41,96 @@ export type Database = {
         }
         Relationships: []
       }
+      fornecedor_produto_precos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_vigencia: string
+          fornecedor_produto_id: string
+          id: string
+          observacoes: string | null
+          preco: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_vigencia?: string
+          fornecedor_produto_id: string
+          id?: string
+          observacoes?: string | null
+          preco: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_vigencia?: string
+          fornecedor_produto_id?: string
+          id?: string
+          observacoes?: string | null
+          preco?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedor_produto_precos_fornecedor_produto_id_fkey"
+            columns: ["fornecedor_produto_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedor_produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedor_produtos: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          empresa_id: string
+          fornecedor_id: string
+          id: string
+          produto_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          empresa_id: string
+          fornecedor_id: string
+          id?: string
+          produto_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          empresa_id?: string
+          fornecedor_id?: string
+          id?: string
+          produto_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedor_produtos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedor_produtos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedor_produtos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           cep: string | null
@@ -296,6 +386,7 @@ export type Database = {
           deleted_at: string | null
           descricao: string
           empresa_id: string
+          fabricante: string | null
           id: string
           observacoes: string | null
           unidade: string | null
@@ -308,6 +399,7 @@ export type Database = {
           deleted_at?: string | null
           descricao: string
           empresa_id: string
+          fabricante?: string | null
           id?: string
           observacoes?: string | null
           unidade?: string | null
@@ -320,6 +412,7 @@ export type Database = {
           deleted_at?: string | null
           descricao?: string
           empresa_id?: string
+          fabricante?: string | null
           id?: string
           observacoes?: string | null
           unidade?: string | null
