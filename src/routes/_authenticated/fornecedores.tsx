@@ -19,6 +19,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FornecedorProdutosTab } from "@/components/fornecedor-produtos-tab";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/fornecedores")({
