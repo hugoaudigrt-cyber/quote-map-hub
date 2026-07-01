@@ -286,49 +286,34 @@ function NovoMapaDialog({ onClose, onCreated }: { onClose: () => void; onCreated
           .select("id, produto_id");
         if (e3) throw e3;
 
-        // Pré-carrega último preço vigente por (fornecedor, produto)
+        // Pré-carrega preço vigente por (fornecedor, produto) na tabela produto_fornecedor
         const produtoIds = Array.from(new Set(itens.map((i) => i.produto_id)));
         const { data: links } = await supabase
-          .from("fornecedor_produtos")
-          .select("id, fornecedor_id, produto_id")
+          .from("produto_fornecedor")
+          .select("fornecedor_id, produto_id, preco")
           .in("fornecedor_id", fornecedorIds)
           .in("produto_id", produtoIds)
           .is("deleted_at", null);
 
-        const linkByPair = new Map<string, string>(); // `${forn}|${prod}` -> link.id
-        const linkIds: string[] = [];
+        const precoPorPar = new Map<string, number | null>();
         (links ?? []).forEach((l) => {
-          linkByPair.set(`${l.fornecedor_id}|${l.produto_id}`, l.id);
-          linkIds.push(l.id);
+          precoPorPar.set(`${l.fornecedor_id}|${l.produto_id}`, l.preco == null ? null : Number(l.preco));
         });
 
-        const ultimoPorLink = new Map<string, number>();
-        if (linkIds.length) {
-          const { data: precosHist } = await supabase
-            .from("fornecedor_produto_precos")
-            .select("fornecedor_produto_id, preco, data_vigencia, created_at")
-            .in("fornecedor_produto_id", linkIds)
-            .order("data_vigencia", { ascending: false })
-            .order("created_at", { ascending: false });
-          (precosHist ?? []).forEach((p) => {
-            if (!ultimoPorLink.has(p.fornecedor_produto_id)) {
-              ultimoPorLink.set(p.fornecedor_produto_id, Number(p.preco));
-            }
-          });
-        }
-
         const precos = insertedItens!.flatMap((it) =>
-          fornecedorIds.map((fid) => {
-            const linkId = linkByPair.get(`${fid}|${it.produto_id}`);
-            const preco = linkId ? ultimoPorLink.get(linkId) ?? null : null;
-            return { mapa_item_id: it.id, fornecedor_id: fid, preco };
-          }),
+          fornecedorIds.map((fid) => ({
+            mapa_item_id: it.id,
+            fornecedor_id: fid,
+            preco: precoPorPar.get(`${fid}|${it.produto_id}`) ?? null,
+          })),
         );
         if (precos.length > 0) {
           const { error: e4 } = await supabase.from("mapa_precos").insert(precos);
           if (e4) throw e4;
         }
       }
+
+
 
 
       toast.success("Mapa criado");
