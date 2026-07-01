@@ -78,7 +78,7 @@ function SolicitacoesPage() {
 
   async function load() {
     setLoading(true);
-    const [{ data: sols, error }, { data: ob }, { data: pr }] = await Promise.all([
+    const [{ data: sols, error }, { data: ob }, { data: pr }, { data: pf }] = await Promise.all([
       supabase
         .from("solicitacoes")
         .select("*, obras(codigo, nome), solicitacao_itens(id)")
@@ -86,6 +86,10 @@ function SolicitacoesPage() {
         .order("codigo", { ascending: false }),
       supabase.from("obras").select("*").is("deleted_at", null).order("codigo", { ascending: false }),
       supabase.from("produtos").select("*").is("deleted_at", null).order("descricao"),
+      supabase
+        .from("produto_fornecedor")
+        .select("produto_id, preco, fornecedor:fornecedores(razao_social, nome_fantasia)")
+        .is("deleted_at", null),
     ]);
     if (error) toast.error("Erro ao carregar solicitações");
     else {
@@ -97,8 +101,17 @@ function SolicitacoesPage() {
     }
     setObras((ob ?? []) as Obra[]);
     setProdutos((pr ?? []) as Produto[]);
+
+    const map: Record<string, { nome: string; preco: number | null }[]> = {};
+    (pf ?? []).forEach((r: any) => {
+      const nome = r.fornecedor?.nome_fantasia || r.fornecedor?.razao_social || "Fornecedor";
+      const preco = r.preco == null ? null : Number(r.preco);
+      (map[r.produto_id] ||= []).push({ nome, preco });
+    });
+    setProdForn(map);
     setLoading(false);
   }
+
 
   useEffect(() => { load(); }, []);
 
