@@ -237,46 +237,63 @@ function ProdutosPage() {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar produto" : "Novo produto"}</DialogTitle>
-            <DialogDescription>Preencha os dados do produto.</DialogDescription>
+            <DialogDescription>
+              {editing
+                ? "Atualize os dados do produto e gerencie seus fornecedores."
+                : "Preencha os dados do produto. Após salvar, você poderá vincular fornecedores."}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Código *</Label>
-                <Input value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })} required />
-              </div>
-              <div className="space-y-2">
-                <Label>Unidade</Label>
-                <Input value={form.unidade} onChange={(e) => setForm({ ...form, unidade: e.target.value })} placeholder="Ex: UN, KG, M, M2" />
-              </div>
-              <div className="sm:col-span-2 space-y-2">
-                <Label>Descrição *</Label>
-                <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} required />
-              </div>
-              <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="Ex: Material de construção, Elétrica" />
-              </div>
-              <div className="space-y-2">
-                <Label>Fabricante</Label>
-                <Input value={form.fabricante} onChange={(e) => setForm({ ...form, fabricante: e.target.value })} placeholder="Opcional" />
-              </div>
-
-              <div className="sm:col-span-2 space-y-2">
-                <Label>Observações</Label>
-                <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
-            </DialogFooter>
-          </form>
+          <Tabs defaultValue="dados" className="w-full">
+            <TabsList className={editing ? "grid w-full grid-cols-2" : "hidden"}>
+              <TabsTrigger value="dados">Dados</TabsTrigger>
+              <TabsTrigger value="fornecedores">Fornecedores deste Produto</TabsTrigger>
+            </TabsList>
+            <TabsContent value="dados" className="mt-4">
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Código *</Label>
+                    <Input value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Unidade</Label>
+                    <Input value={form.unidade} onChange={(e) => setForm({ ...form, unidade: e.target.value })} placeholder="Ex: UN, KG, M, M2" />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label>Descrição *</Label>
+                    <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Categoria</Label>
+                    <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="Ex: Material de construção, Elétrica" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fabricante</Label>
+                    <Input value={form.fabricante} onChange={(e) => setForm({ ...form, fabricante: e.target.value })} placeholder="Opcional" />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label>Observações</Label>
+                    <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+                </DialogFooter>
+              </form>
+            </TabsContent>
+            {editing && (
+              <TabsContent value="fornecedores" className="mt-4">
+                <ProdutoFornecedoresTab produtoId={editing.id} />
+              </TabsContent>
+            )}
+          </Tabs>
         </DialogContent>
       </Dialog>
+
 
       <AlertDialog open={!!duplicate} onOpenChange={(o) => !o && setDuplicate(null)}>
         <AlertDialogContent>
