@@ -63,6 +63,8 @@ function SolicitacoesPage() {
   const [list, setList] = useState<Row[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [prodForn, setProdForn] = useState<Record<string, { nome: string; preco: number | null }[]>>({});
+
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | Status>("todos");
