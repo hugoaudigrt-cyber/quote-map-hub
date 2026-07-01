@@ -385,41 +385,66 @@ function SolicitacoesPage() {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {itens.map((it, idx) => (
-                    <div key={idx} className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_120px_1fr_auto]">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Produto</Label>
-                        <Select value={it.produto_id} onValueChange={(v) => updateItem(idx, { produto_id: v })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            {produtos.map((p) => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.codigo} · {p.descricao}{p.unidade ? ` (${p.unidade})` : ""}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                  {itens.map((it, idx) => {
+                    const linked = it.produto_id ? prodForn[it.produto_id] ?? [] : [];
+                    return (
+                      <div key={idx} className="space-y-2 rounded-md border p-3">
+                        <div className="grid gap-2 sm:grid-cols-[1fr_120px_1fr_auto]">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Produto</Label>
+                            <Select value={it.produto_id} onValueChange={(v) => updateItem(idx, { produto_id: v })}>
+                              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                              <SelectContent>
+                                {produtos.map((p) => (
+                                  <SelectItem key={p.id} value={p.id}>
+                                    {p.codigo} · {p.descricao}{p.unidade ? ` (${p.unidade})` : ""}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Quantidade</Label>
+                            <Input
+                              type="number" step="0.01" min="0"
+                              value={it.quantidade}
+                              onChange={(e) => updateItem(idx, { quantidade: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Observações</Label>
+                            <Input value={it.observacoes} onChange={(e) => updateItem(idx, { observacoes: e.target.value })} />
+                          </div>
+                          <div className="flex items-end">
+                            <Button type="button" size="icon" variant="ghost" onClick={() => removeItem(idx)} disabled={itens.length === 1}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {it.produto_id && (
+                          <div className="rounded-md bg-muted/40 px-2 py-1.5 text-xs">
+                            {linked.length === 0 ? (
+                              <span className="text-muted-foreground">Nenhum fornecedor vinculado a este produto.</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                <span className="text-muted-foreground">Fornecedores vinculados:</span>
+                                {linked.map((f, i) => (
+                                  <span key={i} className="font-medium">
+                                    {f.nome}
+                                    {f.preco != null && (
+                                      <span className="text-muted-foreground font-normal"> · {f.preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Quantidade</Label>
-                        <Input
-                          type="number" step="0.01" min="0"
-                          value={it.quantidade}
-                          onChange={(e) => updateItem(idx, { quantidade: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Observações</Label>
-                        <Input value={it.observacoes} onChange={(e) => updateItem(idx, { observacoes: e.target.value })} />
-                      </div>
-                      <div className="flex items-end">
-                        <Button type="button" size="icon" variant="ghost" onClick={() => removeItem(idx)} disabled={itens.length === 1}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
               )}
             </div>
 
