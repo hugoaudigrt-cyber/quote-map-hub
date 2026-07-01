@@ -378,6 +378,79 @@ export type Database = {
           },
         ]
       }
+      produto_fornecedor: {
+        Row: {
+          codigo_fornecedor: string | null
+          created_at: string
+          data_ultima_atualizacao: string
+          deleted_at: string | null
+          empresa_id: string
+          fornecedor_id: string
+          id: string
+          marca: string | null
+          observacoes: string | null
+          prazo_entrega: string | null
+          preco: number | null
+          produto_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          codigo_fornecedor?: string | null
+          created_at?: string
+          data_ultima_atualizacao?: string
+          deleted_at?: string | null
+          empresa_id: string
+          fornecedor_id: string
+          id?: string
+          marca?: string | null
+          observacoes?: string | null
+          prazo_entrega?: string | null
+          preco?: number | null
+          produto_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          codigo_fornecedor?: string | null
+          created_at?: string
+          data_ultima_atualizacao?: string
+          deleted_at?: string | null
+          empresa_id?: string
+          fornecedor_id?: string
+          id?: string
+          marca?: string | null
+          observacoes?: string | null
+          prazo_entrega?: string | null
+          preco?: number | null
+          produto_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produto_fornecedor_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produto_fornecedor_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produto_fornecedor_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtos: {
         Row: {
           categoria: string | null
