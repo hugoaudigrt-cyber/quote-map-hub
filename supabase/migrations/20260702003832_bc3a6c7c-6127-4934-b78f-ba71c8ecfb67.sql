@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.current_empresa_id() FROM PUBLIC, anon, authenticated;
