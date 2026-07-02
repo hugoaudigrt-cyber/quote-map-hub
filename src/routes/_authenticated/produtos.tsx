@@ -1,204 +1,185 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Package, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Package, Search, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables, TablesInsert } from "@/integrations/supabase/types";
-import { useEnsureEmpresa } from "@/hooks/use-empresa";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProdutoFornecedoresTab } from "@/components/produto-fornecedores-tab";
+import { CategoriaSelect } from "@/components/categoria-select";
 import { toast } from "sonner";
 
-
 export const Route = createFileRoute("/_authenticated/produtos")({
-  head: () => ({ meta: [{ title: "Produtos | Mapa de Cotações" }] }),
+  head: () => ({ meta: [{ title: "Catálogo de Produtos | Mapa de Cotações" }] }),
   component: ProdutosPage,
 });
 
-type Produto = Tables<"produtos">;
-
-const empty = {
-  codigo: "",
-  descricao: "",
-  unidade: "",
-  categoria: "",
-  fabricante: "",
-  observacoes: "",
+type Produto = {
+  id: string;
+  codigo: string;
+  descricao: string;
+  unidade: string | null;
+  categoria: string | null;
+  fabricante: string | null;
 };
 
+type Vinculo = {
+  produto_id: string;
+  preco: number | null;
+  prazo_entrega: string | null;
+  marca: string | null;
+  codigo_fornecedor: string | null;
+  data_ultima_atualizacao: string;
+  fornecedor: { id: string; razao_social: string; nome_fantasia: string | null } | null;
+};
+
+const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const nomeFornecedor = (f: Vinculo["fornecedor"]) =>
+  f ? (f.nome_fantasia || f.razao_social) : "—";
 
 function ProdutosPage() {
-  const ensureEmpresa = useEnsureEmpresa();
-  const [list, setList] = useState<Produto[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [vinculos, setVinculos] = useState<Vinculo[]>([]);
+  const [empresaNome, setEmpresaNome] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Produto | null>(null);
-  const [form, setForm] = useState({ ...empty });
-  const [saving, setSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<Produto | null>(null);
-  const [duplicate, setDuplicate] = useState<Produto | null>(null);
+  const [categoria, setCategoria] = useState("");
+  const [detail, setDetail] = useState<Produto | null>(null);
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("produtos")
-      .select("*")
-      .is("deleted_at", null)
-      .order("descricao");
+    const [{ data: prods, error }, { data: links }, { data: emp }] = await Promise.all([
+      supabase.from("produtos").select("id, codigo, descricao, unidade, categoria, fabricante").is("deleted_at", null),
+      supabase
+        .from("produto_fornecedor")
+        .select("produto_id, preco, prazo_entrega, marca, codigo_fornecedor, data_ultima_atualizacao, fornecedor:fornecedores(id, razao_social, nome_fantasia)")
+        .is("deleted_at", null)
+        .eq("status", "ativo"),
+      supabase.from("empresas").select("nome").limit(1).maybeSingle(),
+    ]);
     if (error) toast.error("Erro ao carregar produtos");
-    else setList(data ?? []);
+    setProdutos((prods ?? []) as Produto[]);
+    setVinculos(((links ?? []) as unknown as Vinculo[]).map((v) => ({
+      ...v,
+      preco: v.preco == null ? null : Number(v.preco),
+    })));
+    setEmpresaNome(emp?.nome ?? "");
     setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
+  const vincByProduto = useMemo(() => {
+    const m = new Map<string, Vinculo[]>();
+    for (const v of vinculos) {
+      const arr = m.get(v.produto_id) ?? [];
+      arr.push(v);
+      m.set(v.produto_id, arr);
+    }
+    return m;
+  }, [vinculos]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return list;
-    return list.filter((p) =>
-      [p.codigo, p.descricao, p.categoria]
-        .filter(Boolean)
-        .some((v) => v!.toLowerCase().includes(q)),
-    );
-  }, [list, search]);
+    return produtos
+      .filter((p) => !categoria || p.categoria === categoria)
+      .filter((p) => !q || [p.codigo, p.descricao].filter(Boolean).some((v) => v!.toLowerCase().includes(q)))
+      .sort((a, b) => {
+        const ca = (a.categoria || "zzz").localeCompare(b.categoria || "zzz");
+        if (ca !== 0) return ca;
+        return a.descricao.localeCompare(b.descricao);
+      });
+  }, [produtos, search, categoria]);
 
-  function openNew() {
-    setEditing(null);
-    setForm({ ...empty });
-    setOpen(true);
+  function menorPreco(produtoId: string): number | null {
+    const arr = vincByProduto.get(produtoId) ?? [];
+    const precos = arr.map((v) => v.preco).filter((p): p is number => p !== null);
+    if (!precos.length) return null;
+    return Math.min(...precos);
   }
 
-  function openEdit(p: Produto) {
-    setEditing(p);
-    setForm({
-      codigo: p.codigo ?? "",
-      descricao: p.descricao ?? "",
-      unidade: p.unidade ?? "",
-      categoria: p.categoria ?? "",
-      fabricante: p.fabricante ?? "",
-      observacoes: p.observacoes ?? "",
-    });
-    setOpen(true);
-  }
-
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.codigo.trim()) return toast.error("Informe o código");
-    if (!form.descricao.trim()) return toast.error("Informe a descrição");
-
-    setSaving(true);
-
-    const codigoTrim = form.codigo.trim().toUpperCase();
-
-    const dupQuery = supabase
-      .from("produtos")
-      .select("*")
-      .eq("codigo", codigoTrim)
-      .is("deleted_at", null)
-      .maybeSingle();
-    const { data: dup } = editing
-      ? await supabase.from("produtos").select("*").eq("codigo", codigoTrim).is("deleted_at", null).neq("id", editing.id).maybeSingle()
-      : await dupQuery;
-
-    if (dup) {
-      setDuplicate(dup as Produto);
-      setSaving(false);
-      return;
-    }
-
-    const payload: Omit<TablesInsert<"produtos">, "empresa_id"> = {
-      codigo: codigoTrim,
-      descricao: form.descricao.trim(),
-      unidade: form.unidade || null,
-      categoria: form.categoria || null,
-      fabricante: form.fabricante || null,
-      observacoes: form.observacoes || null,
-    };
-
-
-    if (editing) {
-      const { error } = await supabase.from("produtos").update(payload).eq("id", editing.id);
-      if (error) toast.error("Erro ao atualizar: " + error.message);
-      else { toast.success("Produto atualizado"); setOpen(false); load(); }
-    } else {
-      const empresaId = await ensureEmpresa();
-      const { error } = await supabase.from("produtos").insert({ ...payload, empresa_id: empresaId });
-      if (error) {
-        if (error.code === "23505") toast.error("Código já cadastrado nesta empresa");
-        else toast.error("Erro ao criar: " + error.message);
-      } else { toast.success("Produto criado"); setOpen(false); load(); }
-    }
-    setSaving(false);
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    const { error } = await supabase.from("produtos").update({ deleted_at: new Date().toISOString() }).eq("id", deleteTarget.id);
-    if (error) toast.error("Erro ao excluir");
-    else { toast.success("Produto excluído"); load(); }
-    setDeleteTarget(null);
-  }
-
-  function openDuplicate() {
-    if (!duplicate) return;
-    const d = duplicate;
-    setDuplicate(null);
-    openEdit(d);
+  function fornecedoresDoProduto(produtoId: string) {
+    return (vincByProduto.get(produtoId) ?? []).map((v) => nomeFornecedor(v.fornecedor));
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-6 print:space-y-2">
+      <style>{`
+        @media print {
+          body { background: white; }
+          [data-sidebar], nav, header, .no-print { display: none !important; }
+          .print-only { display: block !important; }
+          .print-hide { display: none !important; }
+          main { padding: 0 !important; }
+          table { font-size: 11px; }
+        }
+        .print-only { display: none; }
+      `}</style>
+
+      <div className="print-only print:mb-4">
+        <div className="text-sm text-muted-foreground">{empresaNome || "Empresa"}</div>
+        <h1 className="text-xl font-bold">Catálogo de Produtos</h1>
+        <div className="text-xs text-muted-foreground">
+          Impresso em {new Date().toLocaleString("pt-BR")}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 print-hide">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
             <Package className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Produtos</h1>
-            <p className="text-sm text-muted-foreground">Cadastro e gestão de produtos para cotação.</p>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Catálogo de Produtos</h1>
+            <p className="text-sm text-muted-foreground">
+              Consulta rápida ao catálogo. Cadastro é feito na aba de Fornecedores.
+            </p>
           </div>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="h-4 w-4" /> Novo produto
+        <Button variant="outline" onClick={() => window.print()}>
+          <Printer className="h-4 w-4" /> Imprimir lista
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="gap-2">
-          <div className="flex items-center justify-between gap-3">
+      <Card className="print:border-0 print:shadow-none">
+        <CardHeader className="gap-2 print-hide">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle>Lista de produtos</CardTitle>
-              <CardDescription>{list.length} {list.length === 1 ? "produto cadastrado" : "produtos cadastrados"}.</CardDescription>
+              <CardDescription>
+                {produtos.length} {produtos.length === 1 ? "produto" : "produtos"} no catálogo.
+              </CardDescription>
             </div>
-            <div className="relative w-full max-w-xs">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por código, descrição ou categoria..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8"
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative w-full max-w-xs">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por código ou descrição..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <div className="w-full max-w-xs">
+                <CategoriaSelect
+                  value={categoria}
+                  onChange={setCategoria}
+                  includeAllOption
+                  allOptionLabel="Todas as categorias"
+                  placeholder="Filtrar por categoria"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+        <CardContent className="print:p-0">
+          <div className="rounded-md border print:border-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -206,125 +187,102 @@ function ProdutosPage() {
                   <TableHead>Descrição</TableHead>
                   <TableHead>Unidade</TableHead>
                   <TableHead>Categoria</TableHead>
-                  <TableHead className="w-[100px] text-right">Ações</TableHead>
+                  <TableHead className="print-hide">Fornecedores</TableHead>
+                  <TableHead className="text-right print-hide">Menor preço</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    {list.length === 0 ? "Nenhum produto cadastrado ainda." : "Nenhum resultado para a busca."}
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    {produtos.length === 0 ? "Nenhum produto cadastrado ainda." : "Nenhum resultado para a busca."}
                   </TableCell></TableRow>
-                ) : filtered.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-mono text-xs font-medium">{p.codigo}</TableCell>
-                    <TableCell>{p.descricao}</TableCell>
-                    <TableCell>{p.unidade || "—"}</TableCell>
-                    <TableCell>{p.categoria || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(p)}><Trash2 className="h-4 w-4" /></Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                ) : filtered.map((p) => {
+                  const forns = fornecedoresDoProduto(p.id);
+                  const mp = menorPreco(p.id);
+                  return (
+                    <TableRow key={p.id} className="cursor-pointer print:cursor-auto" onClick={() => setDetail(p)}>
+                      <TableCell className="font-mono text-xs font-medium">{p.codigo}</TableCell>
+                      <TableCell>{p.descricao}</TableCell>
+                      <TableCell>{p.unidade || "—"}</TableCell>
+                      <TableCell>{p.categoria || "—"}</TableCell>
+                      <TableCell className="print-hide">
+                        {forns.length === 0 ? (
+                          <span className="text-muted-foreground text-xs">Nenhum</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {forns.slice(0, 3).map((n, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs font-normal">{n}</Badge>
+                            ))}
+                            {forns.length > 3 && (
+                              <Badge variant="outline" className="text-xs">+{forns.length - 3}</Badge>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-medium print-hide">
+                        {mp !== null ? fmtBRL(mp) : "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar produto" : "Novo produto"}</DialogTitle>
+            <DialogTitle>{detail?.descricao}</DialogTitle>
             <DialogDescription>
-              {editing
-                ? "Atualize os dados do produto e gerencie seus fornecedores."
-                : "Preencha os dados do produto. Após salvar, você poderá vincular fornecedores."}
+              <span className="font-mono">{detail?.codigo}</span>
+              {detail?.categoria ? ` · ${detail.categoria}` : ""}
+              {detail?.unidade ? ` · ${detail.unidade}` : ""}
+              {detail?.fabricante ? ` · ${detail.fabricante}` : ""}
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue="dados" className="w-full">
-            <TabsList className={editing ? "grid w-full grid-cols-2" : "hidden"}>
-              <TabsTrigger value="dados">Dados</TabsTrigger>
-              <TabsTrigger value="fornecedores">Fornecedores deste Produto</TabsTrigger>
-            </TabsList>
-            <TabsContent value="dados" className="mt-4">
-              <form onSubmit={handleSave} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Código *</Label>
-                    <Input value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Unidade</Label>
-                    <Input value={form.unidade} onChange={(e) => setForm({ ...form, unidade: e.target.value })} placeholder="Ex: UN, KG, M, M2" />
-                  </div>
-                  <div className="sm:col-span-2 space-y-2">
-                    <Label>Descrição *</Label>
-                    <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Categoria</Label>
-                    <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="Ex: Material de construção, Elétrica" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Fabricante</Label>
-                    <Input value={form.fabricante} onChange={(e) => setForm({ ...form, fabricante: e.target.value })} placeholder="Opcional" />
-                  </div>
-                  <div className="sm:col-span-2 space-y-2">
-                    <Label>Observações</Label>
-                    <Textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
-                </DialogFooter>
-              </form>
-            </TabsContent>
-            {editing && (
-              <TabsContent value="fornecedores" className="mt-4">
-                <ProdutoFornecedoresTab produtoId={editing.id} />
-              </TabsContent>
-            )}
-          </Tabs>
+          {detail && (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead className="text-right">Preço</TableHead>
+                    <TableHead>Prazo</TableHead>
+                    <TableHead>Marca</TableHead>
+                    <TableHead>Cód. fornecedor</TableHead>
+                    <TableHead>Atualizado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(vincByProduto.get(detail.id) ?? []).length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                      Nenhum fornecedor vinculado a este produto.
+                    </TableCell></TableRow>
+                  ) : (vincByProduto.get(detail.id) ?? [])
+                      .slice()
+                      .sort((a, b) => (a.preco ?? Infinity) - (b.preco ?? Infinity))
+                      .map((v, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{nomeFornecedor(v.fornecedor)}</TableCell>
+                      <TableCell className="text-right">{v.preco !== null ? fmtBRL(v.preco) : "—"}</TableCell>
+                      <TableCell>{v.prazo_entrega || "—"}</TableCell>
+                      <TableCell>{v.marca || "—"}</TableCell>
+                      <TableCell>{v.codigo_fornecedor || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(v.data_ultima_atualizacao).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
-
-
-      <AlertDialog open={!!duplicate} onOpenChange={(o) => !o && setDuplicate(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Código já cadastrado</AlertDialogTitle>
-            <AlertDialogDescription>
-              Já existe um produto com este código: <strong>{duplicate?.codigo}</strong> — {duplicate?.descricao}.
-              Deseja abrir o cadastro existente?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Fechar</AlertDialogCancel>
-            <AlertDialogAction onClick={openDuplicate}>Abrir cadastro existente</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir produto</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir <strong>{deleteTarget?.descricao}</strong> ({deleteTarget?.codigo})? Essa ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
