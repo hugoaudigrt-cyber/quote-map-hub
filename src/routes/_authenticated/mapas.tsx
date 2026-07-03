@@ -546,6 +546,9 @@ function MapaDetailDialog({ mapaId, onClose }: { mapaId: string; onClose: () => 
                                 onChange={(e) => updatePreco(idx, f.id, e.target.value)}
                                 className={`text-right h-8 ${isMin ? "bg-green-50 border-green-500 dark:bg-green-950" : ""}`}
                               />
+                              <div className="text-xs text-muted-foreground text-right mt-0.5 h-4">
+                                {p !== null && p !== undefined && p > 0 ? fmt(p) : ""}
+                              </div>
                             </TableCell>
                           );
                         })}
