@@ -417,7 +417,7 @@ function MapaDetailDialog({ mapaId, onClose }: { mapaId: string; onClose: () => 
     const { data: precosData } = itemIds.length
       ? await supabase
           .from("mapa_precos")
-          .select("id, mapa_item_id, fornecedor_id, preco, fornecedor:fornecedores(id, razao_social, nome_fantasia)")
+          .select("id, mapa_item_id, fornecedor_id, preco, fornecedor:fornecedores(id, razao_social, nome_fantasia, telefone, whatsapp, email_comercial, email_financeiro)")
           .in("mapa_item_id", itemIds)
       : { data: [] as any[] };
 
