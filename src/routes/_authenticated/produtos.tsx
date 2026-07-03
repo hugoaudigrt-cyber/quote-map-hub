@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Package, Search, Printer } from "lucide-react";
+import { Package, Search, Printer, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,15 @@ import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CategoriaSelect } from "@/components/categoria-select";
 import { toast } from "sonner";
@@ -39,8 +46,22 @@ type Vinculo = {
   fornecedor: { id: string; razao_social: string; nome_fantasia: string | null } | null;
 };
 
+type FornecedorFull = {
+  id: string;
+  razao_social: string;
+  nome_fantasia: string | null;
+  cnpj: string | null;
+  telefone: string | null;
+  whatsapp: string | null;
+  email_comercial: string | null;
+  email_financeiro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  observacoes: string | null;
+};
+
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const nomeFornecedor = (f: Vinculo["fornecedor"]) =>
+const nomeFornecedor = (f: { razao_social: string; nome_fantasia: string | null } | null) =>
   f ? (f.nome_fantasia || f.razao_social) : "—";
 
 function ProdutosPage() {
@@ -51,6 +72,16 @@ function ProdutosPage() {
   const [search, setSearch] = useState("");
   const [categoria, setCategoria] = useState("");
   const [detail, setDetail] = useState<Produto | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Produto | null>(null);
+
+  // Sheet de fornecedores do produto (lazy)
+  const [sheetProduto, setSheetProduto] = useState<Produto | null>(null);
+  const [sheetVinculos, setSheetVinculos] = useState<Vinculo[] | null>(null);
+  const [sheetLoading, setSheetLoading] = useState(false);
+
+  // Dialog detalhe fornecedor (lazy)
+  const [fornDetail, setFornDetail] = useState<FornecedorFull | null>(null);
+  const [fornLoading, setFornLoading] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -106,6 +137,50 @@ function ProdutosPage() {
 
   function fornecedoresDoProduto(produtoId: string) {
     return (vincByProduto.get(produtoId) ?? []).map((v) => nomeFornecedor(v.fornecedor));
+  }
+
+  async function openSheet(p: Produto) {
+    setSheetProduto(p);
+    setSheetVinculos(null);
+    setSheetLoading(true);
+    const { data, error } = await supabase
+      .from("produto_fornecedor")
+      .select("produto_id, preco, prazo_entrega, marca, codigo_fornecedor, data_ultima_atualizacao, fornecedor:fornecedores(id, razao_social, nome_fantasia)")
+      .eq("produto_id", p.id)
+      .is("deleted_at", null);
+    if (error) toast.error("Erro ao carregar fornecedores");
+    setSheetVinculos(((data ?? []) as unknown as Vinculo[]).map((v) => ({
+      ...v,
+      preco: v.preco == null ? null : Number(v.preco),
+    })));
+    setSheetLoading(false);
+  }
+
+  async function openFornecedor(fornecedorId: string) {
+    setFornLoading(true);
+    setFornDetail(null);
+    const { data, error } = await supabase
+      .from("fornecedores")
+      .select("id, razao_social, nome_fantasia, cnpj, telefone, whatsapp, email_comercial, email_financeiro, cidade, uf, observacoes")
+      .eq("id", fornecedorId)
+      .maybeSingle();
+    if (error) toast.error("Erro ao carregar fornecedor");
+    else if (data) setFornDetail(data as FornecedorFull);
+    setFornLoading(false);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    const { error } = await supabase
+      .from("produtos")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", deleteTarget.id);
+    if (error) toast.error("Erro ao excluir");
+    else {
+      toast.success("Produto excluído");
+      load();
+    }
+    setDeleteTarget(null);
   }
 
   return (
@@ -189,13 +264,14 @@ function ProdutosPage() {
                   <TableHead>Categoria</TableHead>
                   <TableHead className="print-hide">Fornecedores</TableHead>
                   <TableHead className="text-right print-hide">Menor preço</TableHead>
+                  <TableHead className="w-[60px] text-right print-hide">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     {produtos.length === 0 ? "Nenhum produto cadastrado ainda." : "Nenhum resultado para a busca."}
                   </TableCell></TableRow>
                 ) : filtered.map((p) => {
@@ -207,22 +283,35 @@ function ProdutosPage() {
                       <TableCell>{p.descricao}</TableCell>
                       <TableCell>{p.unidade || "—"}</TableCell>
                       <TableCell>{p.categoria || "—"}</TableCell>
-                      <TableCell className="print-hide">
+                      <TableCell
+                        className="print-hide"
+                        onClick={(e) => { e.stopPropagation(); openSheet(p); }}
+                      >
                         {forns.length === 0 ? (
-                          <span className="text-muted-foreground text-xs">Nenhum</span>
+                          <span className="text-muted-foreground text-xs hover:underline">Nenhum</span>
                         ) : (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1 hover:opacity-80">
                             {forns.slice(0, 3).map((n, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs font-normal">{n}</Badge>
+                              <Badge key={i} variant="secondary" className="text-xs font-normal cursor-pointer">{n}</Badge>
                             ))}
                             {forns.length > 3 && (
-                              <Badge variant="outline" className="text-xs">+{forns.length - 3}</Badge>
+                              <Badge variant="outline" className="text-xs cursor-pointer">+{forns.length - 3}</Badge>
                             )}
                           </div>
                         )}
                       </TableCell>
                       <TableCell className="text-right font-medium print-hide">
                         {mp !== null ? fmtBRL(mp) : "—"}
+                      </TableCell>
+                      <TableCell className="text-right print-hide">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                          aria-label="Excluir produto"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -283,6 +372,100 @@ function ProdutosPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Sheet de fornecedores do produto */}
+      <Sheet open={!!sheetProduto} onOpenChange={(o) => { if (!o) { setSheetProduto(null); setSheetVinculos(null); } }}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Fornecedores de {sheetProduto?.descricao}</SheetTitle>
+            <SheetDescription>Clique em um fornecedor para ver os dados completos.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 space-y-2">
+            {sheetLoading ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">Carregando...</p>
+            ) : (sheetVinculos ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">Nenhum fornecedor vinculado.</p>
+            ) : (sheetVinculos ?? [])
+                .slice()
+                .sort((a, b) => (a.preco ?? Infinity) - (b.preco ?? Infinity))
+                .map((v, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => v.fornecedor && openFornecedor(v.fornecedor.id)}
+                className="w-full text-left rounded-md border p-3 hover:bg-muted transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium">{nomeFornecedor(v.fornecedor)}</div>
+                  <div className="font-semibold whitespace-nowrap">
+                    {v.preco !== null ? fmtBRL(v.preco) : "—"}
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 space-x-2">
+                  {v.prazo_entrega && <span>Prazo: {v.prazo_entrega}</span>}
+                  {v.marca && <span>· Marca: {v.marca}</span>}
+                  {v.codigo_fornecedor && <span>· Cód.: {v.codigo_fornecedor}</span>}
+                </div>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Dialog detalhe do fornecedor */}
+      <Dialog open={!!fornDetail || fornLoading} onOpenChange={(o) => { if (!o) { setFornDetail(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{fornDetail?.nome_fantasia || fornDetail?.razao_social || "Fornecedor"}</DialogTitle>
+            <DialogDescription>Dados do fornecedor (somente leitura).</DialogDescription>
+          </DialogHeader>
+          {fornLoading ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Carregando...</p>
+          ) : fornDetail ? (
+            <div className="space-y-2 text-sm">
+              <Row label="Razão social" value={fornDetail.razao_social} />
+              <Row label="Nome fantasia" value={fornDetail.nome_fantasia} />
+              <Row label="CNPJ" value={fornDetail.cnpj} />
+              <Row label="Telefone" value={fornDetail.telefone} />
+              <Row label="WhatsApp" value={fornDetail.whatsapp} />
+              <Row label="E-mail comercial" value={fornDetail.email_comercial} />
+              <Row label="E-mail financeiro" value={fornDetail.email_financeiro} />
+              <Row
+                label="Cidade/UF"
+                value={[fornDetail.cidade, fornDetail.uf].filter(Boolean).join("/") || null}
+              />
+              <Row label="Observações" value={fornDetail.observacoes} />
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFornDetail(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O produto "{deleteTarget?.descricao}" será removido do catálogo. Esta ação não pode ser desfeita pela interface.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div className="grid grid-cols-[140px_1fr] gap-2 border-b py-1.5 last:border-0">
+      <div className="text-muted-foreground">{label}</div>
+      <div>{value || "—"}</div>
     </div>
   );
 }
