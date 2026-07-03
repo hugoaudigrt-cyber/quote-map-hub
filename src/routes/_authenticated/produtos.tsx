@@ -56,7 +56,7 @@ type FornecedorFull = {
   email_comercial: string | null;
   email_financeiro: string | null;
   cidade: string | null;
-  uf: string | null;
+  estado: string | null;
   observacoes: string | null;
 };
 
@@ -161,7 +161,7 @@ function ProdutosPage() {
     setFornDetail(null);
     const { data, error } = await supabase
       .from("fornecedores")
-      .select("id, razao_social, nome_fantasia, cnpj, telefone, whatsapp, email_comercial, email_financeiro, cidade, uf, observacoes")
+      .select("id, razao_social, nome_fantasia, cnpj, telefone, whatsapp, email_comercial, email_financeiro, cidade, estado, observacoes")
       .eq("id", fornecedorId)
       .maybeSingle();
     if (error) toast.error("Erro ao carregar fornecedor");
@@ -432,7 +432,7 @@ function ProdutosPage() {
               <Row label="E-mail financeiro" value={fornDetail.email_financeiro} />
               <Row
                 label="Cidade/UF"
-                value={[fornDetail.cidade, fornDetail.uf].filter(Boolean).join("/") || null}
+                value={[fornDetail.cidade, fornDetail.estado].filter(Boolean).join("/") || null}
               />
               <Row label="Observações" value={fornDetail.observacoes} />
             </div>
