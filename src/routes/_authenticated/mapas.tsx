@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/_authenticated/mapas")({
   head: () => ({ meta: [{ title: "Mapas de Cotação | Mapa de Cotações" }] }),
@@ -57,7 +58,15 @@ type MapaRow = {
 };
 
 type Solicitacao = { id: string; codigo: string; obra: { nome: string } | null };
-type Fornecedor = { id: string; razao_social: string; nome_fantasia: string | null };
+type Fornecedor = {
+  id: string;
+  razao_social: string;
+  nome_fantasia: string | null;
+  telefone?: string | null;
+  whatsapp?: string | null;
+  email_comercial?: string | null;
+  email_financeiro?: string | null;
+};
 type Produto = { id: string; codigo: string; descricao: string; unidade: string | null };
 
 type ItemRow = {
@@ -408,7 +417,7 @@ function MapaDetailDialog({ mapaId, onClose }: { mapaId: string; onClose: () => 
     const { data: precosData } = itemIds.length
       ? await supabase
           .from("mapa_precos")
-          .select("id, mapa_item_id, fornecedor_id, preco, fornecedor:fornecedores(id, razao_social, nome_fantasia)")
+          .select("id, mapa_item_id, fornecedor_id, preco, fornecedor:fornecedores(id, razao_social, nome_fantasia, telefone, whatsapp, email_comercial, email_financeiro)")
           .in("mapa_item_id", itemIds)
       : { data: [] as any[] };
 
@@ -537,6 +546,9 @@ function MapaDetailDialog({ mapaId, onClose }: { mapaId: string; onClose: () => 
                                 onChange={(e) => updatePreco(idx, f.id, e.target.value)}
                                 className={`text-right h-8 ${isMin ? "bg-green-50 border-green-500 dark:bg-green-950" : ""}`}
                               />
+                              <div className="text-xs text-muted-foreground text-right mt-0.5 h-4">
+                                {p !== null && p !== undefined && p > 0 ? fmt(p) : ""}
+                              </div>
                             </TableCell>
                           );
                         })}
@@ -577,17 +589,42 @@ function MapaDetailDialog({ mapaId, onClose }: { mapaId: string; onClose: () => 
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ol className="space-y-2">
-                    {ranking.map((r, i) => (
-                      <li key={r.f.id} className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <Badge variant={i === 0 ? "default" : "outline"}>{i + 1}º</Badge>
-                          {r.f.nome_fantasia || r.f.razao_social}
-                        </span>
-                        <span className="font-medium">{fmt(r.total)}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  <TooltipProvider>
+                    <ol className="space-y-2">
+                      {ranking.map((r, i) => {
+                        const contactLines = [
+                          r.f.telefone ? { label: "Telefone", value: r.f.telefone } : null,
+                          r.f.whatsapp ? { label: "WhatsApp", value: r.f.whatsapp } : null,
+                          r.f.email_comercial ? { label: "E-mail comercial", value: r.f.email_comercial } : null,
+                          r.f.email_financeiro ? { label: "E-mail financeiro", value: r.f.email_financeiro } : null,
+                        ].filter(Boolean) as { label: string; value: string }[];
+                        return (
+                          <li key={r.f.id} className="flex items-center justify-between">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-2 cursor-help">
+                                  <Badge variant={i === 0 ? "default" : "outline"}>{i + 1}º</Badge>
+                                  {r.f.nome_fantasia || r.f.razao_social}
+                                </span>
+                              </TooltipTrigger>
+                              {contactLines.length > 0 && (
+                                <TooltipContent side="right" className="bg-popover text-popover-foreground border">
+                                  <div className="space-y-1 text-xs">
+                                    {contactLines.map((c) => (
+                                      <div key={c.label}>
+                                        <span className="font-semibold">{c.label}:</span> {c.value}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                            <span className="font-medium">{fmt(r.total)}</span>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </TooltipProvider>
                 </CardContent>
               </Card>
             )}

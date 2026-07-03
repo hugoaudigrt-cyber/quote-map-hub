@@ -231,6 +231,28 @@ function SolicitacoesPage() {
       if (error) toast.error("Solicitação criada, mas erro nos itens: " + error.message);
     }
 
+    // Sincronizar status dos mapas vinculados ao editar
+    if (editing && (form.status === "finalizada" || form.status === "cancelada")) {
+      const novoStatusMapa = form.status === "finalizada" ? "finalizado" : "cancelado";
+      const { data: mapasVinc } = await supabase
+        .from("mapas_cotacao")
+        .select("id")
+        .eq("solicitacao_id", editing.id)
+        .is("deleted_at", null);
+      const ids = (mapasVinc ?? []).map((m) => m.id);
+      if (ids.length > 0) {
+        const { error: updErr } = await supabase
+          .from("mapas_cotacao")
+          .update({ status: novoStatusMapa })
+          .in("id", ids);
+        if (!updErr) {
+          toast.info(
+            `Solicitação ${form.status === "finalizada" ? "finalizada" : "cancelada"}. ${ids.length} ${ids.length === 1 ? "mapa de cotação atualizado" : "mapas de cotação atualizados"} para '${novoStatusMapa}'.`,
+          );
+        }
+      }
+    }
+
     toast.success(editing ? "Solicitação atualizada" : "Solicitação criada");
     setOpen(false);
     load();
