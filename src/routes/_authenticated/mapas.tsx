@@ -58,7 +58,15 @@ type MapaRow = {
 };
 
 type Solicitacao = { id: string; codigo: string; obra: { nome: string } | null };
-type Fornecedor = { id: string; razao_social: string; nome_fantasia: string | null };
+type Fornecedor = {
+  id: string;
+  razao_social: string;
+  nome_fantasia: string | null;
+  telefone?: string | null;
+  whatsapp?: string | null;
+  email_comercial?: string | null;
+  email_financeiro?: string | null;
+};
 type Produto = { id: string; codigo: string; descricao: string; unidade: string | null };
 
 type ItemRow = {
