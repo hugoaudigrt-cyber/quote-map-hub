@@ -589,17 +589,42 @@ function MapaDetailDialog({ mapaId, onClose }: { mapaId: string; onClose: () => 
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ol className="space-y-2">
-                    {ranking.map((r, i) => (
-                      <li key={r.f.id} className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <Badge variant={i === 0 ? "default" : "outline"}>{i + 1}º</Badge>
-                          {r.f.nome_fantasia || r.f.razao_social}
-                        </span>
-                        <span className="font-medium">{fmt(r.total)}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  <TooltipProvider>
+                    <ol className="space-y-2">
+                      {ranking.map((r, i) => {
+                        const contactLines = [
+                          r.f.telefone ? { label: "Telefone", value: r.f.telefone } : null,
+                          r.f.whatsapp ? { label: "WhatsApp", value: r.f.whatsapp } : null,
+                          r.f.email_comercial ? { label: "E-mail comercial", value: r.f.email_comercial } : null,
+                          r.f.email_financeiro ? { label: "E-mail financeiro", value: r.f.email_financeiro } : null,
+                        ].filter(Boolean) as { label: string; value: string }[];
+                        return (
+                          <li key={r.f.id} className="flex items-center justify-between">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-2 cursor-help">
+                                  <Badge variant={i === 0 ? "default" : "outline"}>{i + 1}º</Badge>
+                                  {r.f.nome_fantasia || r.f.razao_social}
+                                </span>
+                              </TooltipTrigger>
+                              {contactLines.length > 0 && (
+                                <TooltipContent side="right" className="bg-popover text-popover-foreground border">
+                                  <div className="space-y-1 text-xs">
+                                    {contactLines.map((c) => (
+                                      <div key={c.label}>
+                                        <span className="font-semibold">{c.label}:</span> {c.value}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                            <span className="font-medium">{fmt(r.total)}</span>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </TooltipProvider>
                 </CardContent>
               </Card>
             )}
